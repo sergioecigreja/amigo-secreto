@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/amigo-secreto/static/css/main.f855e6bc.css",
+    "main.js": "/amigo-secreto/static/js/main.78f2a119.js",
+    "index.html": "/amigo-secreto/index.html",
+    "main.f855e6bc.css.map": "/amigo-secreto/static/css/main.f855e6bc.css.map",
+    "main.78f2a119.js.map": "/amigo-secreto/static/js/main.78f2a119.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.f855e6bc.css",
+    "static/js/main.78f2a119.js"
+  ]
+}
