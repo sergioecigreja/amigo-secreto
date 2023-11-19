@@ -16,13 +16,7 @@ const authModule = require("./contexts/AuthContext");
 const useAuth = authModule.useAuth;
 
 export default function Login() {
-  const {
-    login,
-    sendEmailLink,
-    isLoginWithEmailLink,
-    loginWithEmailLink,
-    logout,
-  } = useAuth();
+  const { login, isLoginWithEmailLink, loginWithEmailLink, logout } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState(false);
@@ -66,25 +60,17 @@ export default function Login() {
     setLoading(false);
   }
 
-  async function handleEmailLink() {
-    try {
-      const email = "ruipcsantos8@gmail.com";
-      sendEmailLink(email).then(() => {
-        window.localStorage.setItem("emailForSignIn", email);
-      });
-    } catch (err) {
-      setError(
-        `Erro ao autenticar com email link! Code: ${err.code} Message: ${err.message}`
-      );
-    }
-  }
-
   return (
-    <Container fixed maxWidth="md" sx={{ padding: 2 }}>
+    <Container
+      fixed
+      maxWidth="md"
+      sx={{ padding: 2, backgroundColor: "#e3e3fd" }}
+    >
       <Card
         sx={{
           padding: 4,
           margin: "auto",
+          backgroundColor: "#dbdbf4", //",
         }}
       >
         {error && <Alert severity="error">{error}</Alert>}
@@ -122,16 +108,17 @@ export default function Login() {
             <Button type="submit" variant="contained" disabled={loading}>
               Log In
             </Button>
-            <Divider light />
-            <Button variant="text" onClick={handleEmailLink}>
-              Log In com link
-            </Button>
           </Stack>
         </form>
       </Card>
-      <div>
-        Não tens conta? <Link to={"/signup"}>Regista-te</Link>
-      </div>
+      <Stack paddingTop={2} spacing={2} justifyContent={"center"}>
+        <Typography variant="body2" sx={{ textAlign: "center" }}>
+          Não tens conta? <Link to={"/signup"}>Regista-te</Link>
+        </Typography>
+        <Typography variant="body2" sx={{ textAlign: "center" }}>
+          Perdeste a password? <Link to={"/reset"}>Reset</Link>
+        </Typography>
+      </Stack>
     </Container>
   );
 }

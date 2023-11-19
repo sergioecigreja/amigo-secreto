@@ -7,6 +7,7 @@ import {
   signOut,
   sendSignInLinkToEmail,
   signInWithEmailLink,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 
 const AuthContext = React.createContext();
@@ -60,6 +61,10 @@ export function AuthProvider({ children }) {
     return false;
   }
 
+  function resetPassword(email) {
+    return sendPasswordResetEmail(auth, email);
+  }
+
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       setCurrentUser(user);
@@ -80,6 +85,7 @@ export function AuthProvider({ children }) {
     loginWithEmailLink,
     isLoginWithEmailLink,
     isUserAdmin,
+    resetPassword,
   };
 
   return (

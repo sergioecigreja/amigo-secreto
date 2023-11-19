@@ -20,7 +20,10 @@ import { db } from "./firebase";
 import { getDocs, collection, setDoc, doc, addDoc } from "firebase/firestore";
 import AskHelpFromFriend from "./AskHelpFromFriend";
 import MessageSecretFriend from "./MessageSecretFriend";
-import sendEmailToUser from "./elasticMail";
+import {
+  sendFriendRespondedEmailToUser,
+  sendHelpRequestEmailToUser,
+} from "./elasticMail";
 
 export default function Home() {
   const [error, setError] = useState();
@@ -76,24 +79,28 @@ export default function Home() {
   }
 
   function findPairWhereUserIsSecret(arr) {
-    const findPair = (pair) => pair.secret === currentUser.email;
-    return arr.findIndex(findPair);
+    try {
+      const findPair = (pair) => pair.secret === currentUser.email;
+      return arr.findIndex(findPair);
+    } catch (err) {}
   }
 
   function findPairWhereUserIsFriend(arr) {
-    const findPair = (pair) => pair.friend === currentUser.email;
-    return arr.findIndex(findPair);
+    try {
+      const findPair = (pair) => pair.friend === currentUser.email;
+      return arr.findIndex(findPair);
+    } catch (err) {}
   }
 
   function handleOnCloseSnackbar() {
     setOpenSnackbar(false);
   }
 
-  async function handleOnSendMessage(message) {
+  async function handleOnSendIdea(idea) {
     const ideasCollectionRef = collection(db, "ideas");
     try {
       addDoc(ideasCollectionRef, {
-        idea: message,
+        idea: idea,
         friend: currentUser.email,
       }).then(() => {
         let pairs = game.pairs;
@@ -107,8 +114,13 @@ export default function Home() {
         setDoc(doc(db, "games", game.id), game).then(() => {
           setOpenSnackbar(true);
         });
+
+        sendFriendRespondedEmailToUser(
+          pairs[pairWhereUserIsFriend].secret
+        ).then((response) => console.log(response.json()));
       });
     } catch (err) {
+      console.error(err);
       setError(err);
     }
   }
@@ -127,7 +139,9 @@ export default function Home() {
     setDoc(doc(db, "games", game.id), game)
       .then(() => {
         setOpenSnackbar(true);
-        sendEmailToUser(email).then((response) => console.log(response.json()));
+        sendHelpRequestEmailToUser(email).then((response) =>
+          console.log(response.json())
+        );
       })
       .catch((err) => console.log(err))
       .catch((err) => {
@@ -136,24 +150,36 @@ export default function Home() {
   }
 
   return (
-    <Container fixed maxWidth="md" sx={{ padding: 2 }}>
+    <Container
+      fixed
+      maxWidth="md"
+      sx={{ padding: 2, backgroundColor: "#e3e3fd" }}
+    >
       {error && <Alert severity="error">error</Alert>}
       <Card
         sx={{
           padding: 4,
           margin: "auto",
+          backgroundColor: "#dbdbf4",
         }}
       >
         {!game && (
           <Typography variant="h3" sx={{ textAlign: "center" }}>
-            No Games
+            Sem eventos criados
           </Typography>
         )}
-        {game !== undefined && (
+        {pairWhereUserIsSecret === -1 && (
+          <Typography>O teu email não está associado a um evento!</Typography>
+        )}
+        {game !== undefined && pairWhereUserIsSecret !== -1 && (
           <Stack spacing={2} justifyContent="center">
-            <Typography variant="h1" sx={{ textAlign: "center" }}>
+            <Typography
+              variant="h2"
+              sx={{ textAlign: "center", overflowWrap: "break-word" }}
+            >
               {game.name}
             </Typography>
+            <Divider />
             <Typography variant="h4" sx={{ textAlign: "center" }}>
               Informações
             </Typography>
@@ -171,12 +197,20 @@ export default function Home() {
               <Typography variant="h4" sx={{ textAlign: "center" }}>
                 Convidados
               </Typography>
-              <Box sx={{ bgcolor: "#B4BDFF" }}>
+              <Box sx={{ padding: 1, bgcolor: "#e3e3fd" }}>
                 <List>
+                  <Divider />
                   {game.invitees.map((invitee) => (
                     <ListItem key={invitee} divider>
-                      <ListItemText component="p" sx={{ textAlign: "center" }}>
-                        {invitee}
+                      <ListItemText
+                        component="p"
+                        sx={{
+                          textAlign: "center",
+                          color: "#000000",
+                          overflowWrap: "break-word",
+                        }}
+                      >
+                        <strong>{invitee}</strong>
                       </ListItemText>
                       <Divider />
                     </ListItem>
@@ -189,14 +223,11 @@ export default function Home() {
                   <Typography variant="h5" sx={{ textAlign: "center" }}>
                     És o amigo secreto de:
                   </Typography>
-                  <Typography variant="h5" sx={{ textAlign: "center" }}>
-                    <strong>
-                      {
-                        game.pairs.find(
-                          (pair) => pair.secret === currentUser.email
-                        ).friend
-                      }
-                    </strong>
+                  <Typography
+                    variant="h5"
+                    sx={{ textAlign: "center", overflowWrap: "break-word" }}
+                  >
+                    <strong>{game.pairs[pairWhereUserIsSecret].friend}</strong>
                   </Typography>
                   <AskHelpFromFriend
                     friend={game.pairs[pairWhereUserIsSecret].friend}
@@ -208,7 +239,7 @@ export default function Home() {
             </Stack>
             <MessageSecretFriend
               help={hasSecretAskedForHelp()}
-              onSendMessage={handleOnSendMessage}
+              onSendIdea={handleOnSendIdea}
               responded={game.pairs[pairWhereUserIsFriend].responded}
             />
           </Stack>

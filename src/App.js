@@ -7,6 +7,8 @@ import Home from "./Home";
 import Login from "./Login";
 import Admin from "./Admin";
 import { AdminProtectedRoute, ProtectedRoute } from "./ProtectedRoute";
+import ErrorBoundary from "./ErrorBoundary";
+import ResetPassword from "./ResetPassword";
 
 Array.prototype.sample = function () {
   return this[Math.floor(Math.random() * this.length)];
@@ -15,9 +17,12 @@ Array.prototype.sample = function () {
 const router = createBrowserRouter([
   {
     path: "/",
+    hasErrorBoundary: true,
     element: (
       <ProtectedRoute>
-        <Home />
+        <ErrorBoundary fallback={<p>"There was an error"</p>}>
+          <Home />
+        </ErrorBoundary>
       </ProtectedRoute>
     ),
   },
@@ -28,6 +33,10 @@ const router = createBrowserRouter([
   {
     path: "login",
     element: <Login />,
+  },
+  {
+    path: "reset",
+    element: <ResetPassword />,
   },
   {
     path: "admin",
@@ -41,13 +50,21 @@ const router = createBrowserRouter([
 
 function App() {
   return (
-    <AuthProvider>
-      <RouterProvider router={router}>
-        <Container fixed maxWidth="sm">
-          <SignUp></SignUp>
-        </Container>
-      </RouterProvider>
-    </AuthProvider>
+    <Container
+      sx={{
+        width: "maxContent",
+        height: "maxContent",
+        backgroundColor: "#e3e3fd",
+      }}
+    >
+      <AuthProvider>
+        <RouterProvider router={router}>
+          <Container fixed maxWidth="sm">
+            <SignUp></SignUp>
+          </Container>
+        </RouterProvider>
+      </AuthProvider>
+    </Container>
   );
 }
 

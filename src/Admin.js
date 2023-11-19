@@ -29,6 +29,7 @@ import { db } from "./firebase";
 import { useAuth } from "./contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import PairTable from "./PairTable";
+import { sendInviteEmailToUser } from "./elasticMail";
 
 export default function Admin() {
   const [error, setError] = useState("");
@@ -36,7 +37,7 @@ export default function Admin() {
   const [game, setGame] = useState();
   const gamesCollectionRef = collection(db, "games");
   const [invitee, setInvitee] = useState("");
-  const { currentUser, logout, sendEmailLink } = useAuth();
+  const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
   const [date, setDate] = useState("2023-12-24");
 
@@ -75,6 +76,7 @@ export default function Admin() {
       invitees: game.invitees.filter(function (person) {
         return person !== invitee;
       }),
+      pairs: [],
     });
   }
 
@@ -92,7 +94,8 @@ export default function Admin() {
   function handleAddInvitee() {
     setGame({
       ...game,
-      invitees: [...game.invitees, invitee],
+      invitees: [...game.invitees, invitee.toLowerCase()],
+      pairs: [],
     });
     setInvitee("");
   }
@@ -117,9 +120,9 @@ export default function Admin() {
           setError(err);
         });
 
-      game.invitees.forEach((element) => {
+      game.pairs.forEach((element) => {
         try {
-          sendEmailLink(element);
+          sendInviteEmailToUser(element.secret, element.friend);
         } catch (err) {
           setError(err);
         }
@@ -167,7 +170,11 @@ export default function Admin() {
         let receiverEmail = "";
         do {
           receiverEmail = invitees.sample();
-        } while (receiverEmail === giverEmail || receiver.has(receiverEmail));
+        } while (
+          receiverEmail === giverEmail ||
+          receiver.has(receiverEmail) ||
+          giver.get(receiverEmail) === giverEmail
+        );
         giver.set(giverEmail, receiverEmail);
         receiver.set(receiverEmail, true);
       }
@@ -283,7 +290,12 @@ export default function Admin() {
                   <Button onClick={() => handleAddInvitee()}>Add</Button>
                 </Grid>
               </Grid>
-              <Button onClick={createRandomPairs}>Sort</Button>
+              <Button
+                onClick={createRandomPairs}
+                disabled={game.invitees.length <= 2}
+              >
+                Sort
+              </Button>
               <PairTable pairs={game.pairs} />
               <Button variant="contained" onClick={handleSave}>
                 <strong>Save</strong>

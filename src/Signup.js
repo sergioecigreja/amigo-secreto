@@ -45,11 +45,16 @@ export default function SignUp() {
   }
 
   return (
-    <Container fixed maxWidth="md" sx={{ padding: 2 }}>
+    <Container
+      fixed
+      maxWidth="md"
+      sx={{ padding: 2, backgroundColor: "#e3e3fd" }}
+    >
       <Card
         sx={{
           padding: 4,
           margin: "auto",
+          backgroundColor: "#dbdbf4",
         }}
       >
         {error && <Alert severity="error">{error}</Alert>}
@@ -105,9 +110,9 @@ export default function SignUp() {
           </Stack>
         </form>
       </Card>
-      <div>
+      <Typography paddingTop="2" sx={{ textAlign: "center" }}>
         Já tens conta? <Link to={"/login"}>Login</Link>
-      </div>
+      </Typography>
     </Container>
   );
 }
