@@ -92,11 +92,14 @@ export default function Admin() {
   }
 
   function handleAddInvitee() {
+    const [email, name] = invitee.split(";");
+
     setGame({
       ...game,
-      invitees: [...game.invitees, invitee.toLowerCase()],
+      invitees: [...game.invitees, { email, name }],
       pairs: [],
     });
+
     setInvitee("");
   }
 
@@ -122,7 +125,10 @@ export default function Admin() {
 
       game.pairs.forEach((element) => {
         try {
-          sendInviteEmailToUser(element.secret, element.friend);
+          const secretEmail = game.invitees.find(
+            (invitee) => invitee.name === element.secret
+          ).email;
+          sendInviteEmailToUser(secretEmail, element.friend);
         } catch (err) {
           setError(err);
         }
@@ -165,18 +171,18 @@ export default function Admin() {
     const giver = new Map();
     const receiver = new Map();
     while (giver.size !== invitees.length) {
-      let giverEmail = invitees.sample();
-      if (!giver.has(giverEmail)) {
-        let receiverEmail = "";
+      let giverName = invitees.sample().name;
+      if (!giver.has(giverName)) {
+        let receiverName = "";
         do {
-          receiverEmail = invitees.sample();
+          receiverName = invitees.sample().name;
         } while (
-          receiverEmail === giverEmail ||
-          receiver.has(receiverEmail) ||
-          giver.get(receiverEmail) === giverEmail
+          receiverName === giverName ||
+          receiver.has(receiverName) ||
+          giver.get(receiverName) === giverName
         );
-        giver.set(giverEmail, receiverEmail);
-        receiver.set(receiverEmail, true);
+        giver.set(giverName, receiverName);
+        receiver.set(receiverName, true);
       }
     }
 
@@ -259,7 +265,7 @@ export default function Admin() {
               <List dense={true}>
                 {game.invitees.map((invitee) => (
                   <ListItem
-                    key={invitee}
+                    key={invitee.email}
                     secondaryAction={
                       <IconButton
                         edge="end"
@@ -270,7 +276,7 @@ export default function Admin() {
                       </IconButton>
                     }
                   >
-                    <ListItemText primary={invitee}></ListItemText>
+                    <ListItemText primary={invitee.name}></ListItemText>
                   </ListItem>
                 ))}
               </List>

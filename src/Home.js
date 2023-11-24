@@ -27,13 +27,14 @@ import {
 
 export default function Home() {
   const [error, setError] = useState();
+  const [loading, setLoading] = useState(true);
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
   const [game, setGame] = useState();
   const gamesCollectionRef = collection(db, "games");
   const [openSnackbar, setOpenSnackbar] = useState(false);
-  const [pairWhereUserIsFriend, setPairWhereUserIsFriend] = useState();
-  const [pairWhereUserIsSecret, setPairWhereUserIsSecret] = useState();
+  const [pairWhereUserIsFriend, setPairWhereUserIsFriend] = useState(-1);
+  const [pairWhereUserIsSecret, setPairWhereUserIsSecret] = useState(-1);
 
   useEffect(() => {
     const getGames = async () => {
@@ -44,13 +45,10 @@ export default function Home() {
           id: doc.id,
         }));
 
-        setPairWhereUserIsFriend(
-          findPairWhereUserIsFriend(filteredData[0].pairs)
-        );
-        setPairWhereUserIsSecret(
-          findPairWhereUserIsSecret(filteredData[0].pairs)
-        );
+        setPairWhereUserIsFriend(findPairWhereUserIsFriend(filteredData[0]));
+        setPairWhereUserIsSecret(findPairWhereUserIsSecret(filteredData[0]));
         setGame(filteredData[0]);
+        setLoading(false);
       } catch (err) {
         setError(err);
       }
@@ -80,15 +78,21 @@ export default function Home() {
 
   function findPairWhereUserIsSecret(arr) {
     try {
-      const findPair = (pair) => pair.secret === currentUser.email;
-      return arr.findIndex(findPair);
+      const current = arr.invitees.find(
+        (invitee) => invitee.email === currentUser.email
+      );
+      const findPair = (pair) => pair.secret === current.name;
+      return arr.pairs.findIndex(findPair);
     } catch (err) {}
   }
 
   function findPairWhereUserIsFriend(arr) {
     try {
-      const findPair = (pair) => pair.friend === currentUser.email;
-      return arr.findIndex(findPair);
+      const current = arr.invitees.find(
+        (invitee) => invitee.email === currentUser.email
+      );
+      const findPair = (pair) => pair.friend === current.name;
+      return arr.pairs.findIndex(findPair);
     } catch (err) {}
   }
 
@@ -115,9 +119,12 @@ export default function Home() {
           setOpenSnackbar(true);
         });
 
-        sendFriendRespondedEmailToUser(
-          pairs[pairWhereUserIsFriend].secret
-        ).then((response) => console.log(response.json()));
+        const secretEmail = game.invitees.find(
+          (invitee) => invitee.name === pairs[pairWhereUserIsFriend].secret
+        ).email;
+        sendFriendRespondedEmailToUser(secretEmail).then((response) =>
+          console.log(response.json())
+        );
       });
     } catch (err) {
       console.error(err);
@@ -132,14 +139,16 @@ export default function Home() {
       help: true,
     };
 
-    const email = pairs[pairWhereUserIsSecret].friend;
+    const friendEmail = game.invitees.find(
+      (invitee) => invitee.name === pairs[pairWhereUserIsSecret].friend
+    ).email;
 
     setGame({ ...game, pairs });
 
     setDoc(doc(db, "games", game.id), game)
       .then(() => {
         setOpenSnackbar(true);
-        sendHelpRequestEmailToUser(email).then((response) =>
+        sendHelpRequestEmailToUser(friendEmail).then((response) =>
           console.log(response.json())
         );
       })
@@ -163,15 +172,15 @@ export default function Home() {
           backgroundColor: "#dbdbf4",
         }}
       >
-        {!game && (
+        {!loading && !game && (
           <Typography variant="h3" sx={{ textAlign: "center" }}>
             Sem eventos criados
           </Typography>
         )}
-        {pairWhereUserIsSecret === -1 && (
+        {!loading && pairWhereUserIsSecret === -1 && (
           <Typography>O teu email não está associado a um evento!</Typography>
         )}
-        {game !== undefined && pairWhereUserIsSecret !== -1 && (
+        {!loading && pairWhereUserIsSecret !== -1 && (
           <Stack spacing={2} justifyContent="center">
             <Typography
               variant="h2"
@@ -201,7 +210,7 @@ export default function Home() {
                 <List>
                   <Divider />
                   {game.invitees.map((invitee) => (
-                    <ListItem key={invitee} divider>
+                    <ListItem key={invitee.email} divider>
                       <ListItemText
                         component="p"
                         sx={{
@@ -210,7 +219,7 @@ export default function Home() {
                           overflowWrap: "break-word",
                         }}
                       >
-                        <strong>{invitee}</strong>
+                        <strong>{invitee.name}</strong>
                       </ListItemText>
                       <Divider />
                     </ListItem>
@@ -230,7 +239,13 @@ export default function Home() {
                     <strong>{game.pairs[pairWhereUserIsSecret].friend}</strong>
                   </Typography>
                   <AskHelpFromFriend
-                    friend={game.pairs[pairWhereUserIsSecret].friend}
+                    friend={
+                      game.invitees.find(
+                        (invitee) =>
+                          invitee.name ===
+                          game.pairs[pairWhereUserIsSecret].friend
+                      ).email
+                    }
                     help={game.pairs[pairWhereUserIsSecret].help}
                     onAskForHelp={handleAskHelp}
                   />

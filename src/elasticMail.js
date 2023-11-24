@@ -38,10 +38,10 @@ export async function sendFriendRespondedEmailToUser(email) {
   });
 }
 
-export async function sendInviteEmailToUser(secretEmail, friendEmail) {
+export async function sendInviteEmailToUser(secretEmail, friendName) {
   const API_KEY = process.env.REACT_APP_ELASTIC_EMAIL_API_KEY;
   const subject = "Amigo Secreto";
-  const bodyHtml = generateEmail(friendEmail);
+  const bodyHtml = generateEmail(friendName);
   const from = "sergioeduardoigreja16@gmail.com";
 
   let data = new URLSearchParams();

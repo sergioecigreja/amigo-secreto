@@ -10,6 +10,7 @@ export default function IdeasFromFriend({ friend }) {
   useEffect(() => {
     const getIdea = async () => {
       try {
+        console.log(friend);
         const q = query(
           ideasCollectionRef,
           where("friend", "==", friend),
